@@ -83,14 +83,16 @@ public class Robot extends TimedRobot {
   /** This function is called once when teleop is enabled. */
   @Override
   public void teleopInit() {
-    double leftSpeed = m_controller.getRawAxis(1);
-    double rightSpeed = m_controller.getRawAxis(3);
-    m_drivetrain.tankDrive(leftSpeed, rightSpeed);
+
   }
 
   /** This function is called periodically during operator control. */
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    double leftSpeed = m_controller.getRawAxis(1);
+    double rightSpeed = m_controller.getRawAxis(3);
+    m_drivetrain.tankDrive(leftSpeed, rightSpeed);
+  }
 
   /** This function is called once when the robot is disabled. */
   @Override

@@ -22,9 +22,6 @@ public class RomiDrivetrain {
   private final Encoder m_leftEncoder = new Encoder(4, 5);
   private final Encoder m_rightEncoder = new Encoder(6, 7);
 
-  // Set up the differential drive controller
-  private final DifferentialDrive m_diffDrive = new DifferentialDrive(m_leftMotor, m_rightMotor);
-
   /** Creates a new RomiDrivetrain. */
   public RomiDrivetrain() {
     // Use inches as unit for encoder distances
@@ -34,7 +31,7 @@ public class RomiDrivetrain {
   }
 
   public void tankDrive(double leftSpeed, double rightSpeed) {
-    m_leftMotor.set(leftSpeed);
+    m_leftMotor.set(-leftSpeed);
     m_rightMotor.set(rightSpeed);
   }
 
