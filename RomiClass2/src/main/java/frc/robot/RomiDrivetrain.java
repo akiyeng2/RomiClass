@@ -25,8 +25,8 @@ public class RomiDrivetrain {
   /** Creates a new RomiDrivetrain. */
   public RomiDrivetrain() {
     // Use inches as unit for encoder distances
-    m_leftEncoder.setDistancePerPulse((Math.PI * kWheelDiameterInch) / kCountsPerRevolution);
-    m_rightEncoder.setDistancePerPulse((Math.PI * kWheelDiameterInch) / kCountsPerRevolution);
+    m_leftEncoder.setDistancePerPulse(-(Math.PI * kWheelDiameterInch) / kCountsPerRevolution);
+    m_rightEncoder.setDistancePerPulse(-(Math.PI * kWheelDiameterInch) / kCountsPerRevolution);
     resetEncoders();
   }
 
@@ -35,10 +35,41 @@ public class RomiDrivetrain {
     m_rightMotor.set(rightSpeed);
   }
 
-  public void arcadeDrive(double xaxisSpeed, double zaxisRotate) {
+
+  public void arcadeDrive(double speed, double rotation) {
     // Homework: Fill in this class to run the robot with arcade drive
     // Arcade Drive is: Left stick forward/back controls forward speed
     // right stick left/right controls rotation rate
+    // Scenario: Turning full left, no forward
+    /*
+     * Inputs: speed = 0, rotation = -1 -> Rotate in place left
+     * Outputs: leftSpeed = -1, rightSpeed = 1
+     * 
+     * Inputs: speed = 1, rotation = 0 -> Go forward
+     * Outputs: leftSpeed = rightSpeed = 1
+     * 
+     * Inputs: speed = 1, rotation = 1 -> forward and to the right
+     * Outputs: leftSpeed = 1, rightSpeed = 0
+     *  
+     * Inputs: speed = 1, rotation = -1 -> forward and left
+     * Outputs: leftSpeed = 0, rightSpeed = 1
+     * 
+     * Inputs: speed = -1, rotation = 1 -> Backwards and to the right
+     * Outputs: leftSpeed = -1, rightSpeed = 0
+     * 
+     * f(x, y) = (l, r)
+     *   0  0     0  0    
+     *   0  -1    -1  1
+     *   1   0    1   1
+     *   1   1    1   0
+     *   1   -1   0   1
+     *   -1   1   0   -1
+     * 
+     */
+      m_leftMotor.set((speed + rotation));
+      m_rightMotor.set(-(speed - rotation));
+      
+
   }
 
   public void resetEncoders() {

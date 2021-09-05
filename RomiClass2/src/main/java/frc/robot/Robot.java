@@ -45,7 +45,10 @@ public class Robot extends TimedRobot {
    * SmartDashboard integrated updating.
    */
   @Override
-  public void robotPeriodic() {}
+  public void robotPeriodic() {
+    SmartDashboard.putNumber("Left Distance", m_drivetrain.getLeftDistanceInch());
+    SmartDashboard.putNumber("Right Distance", m_drivetrain.getRightDistanceInch());
+  }
 
   /**
    * This autonomous (along with the chooser code above) shows how to select between different
@@ -59,25 +62,24 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    m_autoSelected = m_chooser.getSelected();
-    // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
-    System.out.println("Auto selected: " + m_autoSelected);
-
     m_drivetrain.resetEncoders();
   }
 
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
-    switch (m_autoSelected) {
-      case kCustomAuto:
-        // Put custom auto code here
-        break;
-      case kDefaultAuto:
-      default:
-        // Put default auto code here
-        break;
+    // We want our robot to move forward 12 inches
+    double leftDistance = m_drivetrain.getLeftDistanceInch();
+    double rightDistance = m_drivetrain.getRightDistanceInch();
+    // Homework: accuracy is your only challenge
+    // Must happen within 10 seconds of autonomousInit
+    double distance = (leftDistance + rightDistance) / 2.0;
+    if(distance < 12) {
+      m_drivetrain.arcadeDrive(-0.75, 0);
+    } else {
+      m_drivetrain.arcadeDrive(0, 0);
     }
+
   }
 
   /** This function is called once when teleop is enabled. */
@@ -89,9 +91,12 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    double leftSpeed = m_controller.getRawAxis(1);
-    double rightSpeed = m_controller.getRawAxis(3);
-    m_drivetrain.tankDrive(leftSpeed, rightSpeed);
+    double speed = m_controller.getRawAxis(1);
+    double rotation = m_controller.getRawAxis(2);
+    m_drivetrain.arcadeDrive(speed, rotation);
+
+
+
   }
 
   /** This function is called once when the robot is disabled. */
