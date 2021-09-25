@@ -91,11 +91,21 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    double speed = m_controller.getRawAxis(1);
-    double rotation = m_controller.getRawAxis(2);
-    m_drivetrain.arcadeDrive(speed, rotation);
 
-
+    boolean isYButtonPressed = m_controller.getRawButton(8);
+    SmartDashboard.putBoolean("Button Pressed", isYButtonPressed);
+    // When ZR is pressed, tank drive, when released arcade drive
+    // Homework: When one button is pressed, change to tank drive
+    // When anothe is pressed, change to arcade drive
+    if (isYButtonPressed) {
+      double leftSpeed = m_controller.getRawAxis(1);
+      double rightSpeed = m_controller.getRawAxis(3);
+      m_drivetrain.tankDrive(leftSpeed, rightSpeed);
+    } else {
+      double speed = m_controller.getRawAxis(1);
+      double rotation = m_controller.getRawAxis(2);
+      m_drivetrain.arcadeDrive(speed, rotation);
+    }
 
   }
 
