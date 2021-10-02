@@ -3,10 +3,7 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot;
-
-
 import edu.wpi.first.wpilibj.Joystick;
-
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -25,6 +22,13 @@ public class Robot extends TimedRobot {
 
   private final RomiDrivetrain m_drivetrain = new RomiDrivetrain();
   private final Joystick m_controller = new Joystick(0);
+
+  private enum State {
+    FORWARD_TANK,
+    FORWARD_ARCADE,
+    REVERSE_TANK,
+    REVERSE_ARCADE;
+  };
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -62,6 +66,10 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
+    m_autoSelected = m_chooser.getSelected();
+    // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
+    System.out.println("Auto selected: " + m_autoSelected);
+
     m_drivetrain.resetEncoders();
   }
 
@@ -74,38 +82,85 @@ public class Robot extends TimedRobot {
     // Homework: accuracy is your only challenge
     // Must happen within 10 seconds of autonomousInit
     double distance = (leftDistance + rightDistance) / 2.0;
-    if(distance < 12) {
-      m_drivetrain.arcadeDrive(-0.75, 0);
-    } else {
-      m_drivetrain.arcadeDrive(0, 0);
-    }
+    if(distance < 11) {
+      m_drivetrain.arcadeDrive(0.6, 0);}
+    else{
+      m_drivetrain.arcadeDrive(0, 0);}
 
   }
 
   /** This function is called once when teleop is enabled. */
+
+  int buttonCounter = 0;
+  State current_state = State.FORWARD_TANK;
+
+
   @Override
   public void teleopInit() {
-
+    buttonCounter = 0;
+    state = State.FORWARD_TANK;
   }
+
 
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
 
-    boolean isYButtonPressed = m_controller.getRawButton(8);
-    SmartDashboard.putBoolean("Button Pressed", isYButtonPressed);
-    // When ZR is pressed, tank drive, when released arcade drive
-    // Homework: When one button is pressed, change to tank drive
-    // When anothe is pressed, change to arcade drive
-    if (isYButtonPressed) {
+    // HW 1: Finish this state machine to allow for forwards/backwards selection
+    // Have one button to toggle which direction is forward and another button to toggle back
+    // Complete code AND draw out the state machine (draw.io or paper or whatever)
+    // Can be done with two separate state machines, or with one big state machine for each combination of fw/back, tank/arcade
+    // Do this as one state machine with four states
+
+
+    // HW 2: In state machine form, have your robot drive in a triangle
+    // Robot should drive completely in a triangle off a single button press
+    // Don't care about accuracy for this - turning and driving can be determined by time or by encoder/gyro values
+    // State 0: Idle
+    // State 1: Drive forward
+    // State 2: Turn
+    // State 3: Done
+
+    // Implement this and draw the state machine
+
+    boolean isYButtonPressed = m_controller.getRawButton(4); // Goes from Tank to Arcade
+    boolean isXButtonPressed = m_controller.getRawButton(3); // Goes from Arcade to Tank
+
+    boolean isAButtonPressed = m_controller.getRawButton(5); // Goes from Fwd to Rev
+    boolean isBButtonPressed = m_controller.getRawButton(6); // Goes from Rev to Fwd
+
+    SmartDashboard.putBoolean("ButtonPressed", isYButtonPressed);
+    
+    State next_state = State.FORWARD_TANK;
+    // Top level if statement determines current state
+    if(current_state == State.FORWARD_TANK) {
+      // We are in arcade drive mode
+      // These describe transitions (button presses)
+      
+      if (isYButtonPressed && isAButtonPressed) {
+        next_state = State.REVERSE_ARCADE;
+      } else  if(isYButtonPressed) {
+        next_state = State.FORWARD_ARCADE;
+      } else if (isAButtonPressed) {
+        next_state = State.REVERSE_TANK;
+      } else {
+        next_state = State.FORWARD_TANK;
+      }
+
+   
+    }
+
+
+    if (current_state == State.FORWARD_TANK) {
       double leftSpeed = m_controller.getRawAxis(1);
       double rightSpeed = m_controller.getRawAxis(3);
       m_drivetrain.tankDrive(leftSpeed, rightSpeed);
+
     } else {
-      double speed = m_controller.getRawAxis(1);
-      double rotation = m_controller.getRawAxis(2);
-      m_drivetrain.arcadeDrive(speed, rotation);
+      m_drivetrain.tankDrive(0, 0);
     }
+
+    current_state = next_state;
 
   }
 
