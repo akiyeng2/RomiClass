@@ -27,7 +27,9 @@ public class Robot extends TimedRobot {
     FORWARD_TANK,
     FORWARD_ARCADE,
     REVERSE_TANK,
-    REVERSE_ARCADE;
+    REVERSE_ARCADE,
+    DRIVE_FORWARD,
+    TURN_RIGHT;
   };
 
   /**
@@ -93,12 +95,16 @@ public class Robot extends TimedRobot {
 
   int buttonCounter = 0;
   State current_state = State.FORWARD_TANK;
+  State next_state = State.FORWARD_TANK;
+  boolean inTriangleDrive;
 
 
   @Override
   public void teleopInit() {
     buttonCounter = 0;
     state = State.FORWARD_TANK;
+    next_state = State.FORWARD_TANK;
+    inTriangleDrive = false;
   }
 
 
@@ -129,39 +135,141 @@ public class Robot extends TimedRobot {
     boolean isAButtonPressed = m_controller.getRawButton(5); // Goes from Fwd to Rev
     boolean isBButtonPressed = m_controller.getRawButton(6); // Goes from Rev to Fwd
 
+    boolean isButton8Pressed = m_controller.getRawButton(8); // Start triangleDrive
+    boolean isBUtton9Pressed = m_controller.getRawButton(9); // Stop triangleDrive
+
+    double leftSpeed = m_controller.getRawAxis(1);
+    double rightSpeed = m_controller.getRawAxis(3);
+
+    double speed = m_controller.getRawAxis(1);
+    double rotation = m_controller.getRawAxis(2);
+
+    if(isButton8Pressed == true){
+      inTriangleDrive = true;
+    } else if (isButton9Pressed == true){
+      inTriangleDrive = false;
+    }
+    
+
     SmartDashboard.putBoolean("ButtonPressed", isYButtonPressed);
     
-    State next_state = State.FORWARD_TANK;
+    //State next_state = State.FORWARD_TANK;
     // Top level if statement determines current state
-    if(current_state == State.FORWARD_TANK) {
-      // We are in arcade drive mode
-      // These describe transitions (button presses)
-      
-      if (isYButtonPressed && isAButtonPressed) {
-        next_state = State.REVERSE_ARCADE;
-      } else  if(isYButtonPressed) {
-        next_state = State.FORWARD_ARCADE;
-      } else if (isAButtonPressed) {
-        next_state = State.REVERSE_TANK;
+    if(inTriangleDrive == false){
+      if(current_state == State.FORWARD_TANK) {
+        // We are in arcade drive mode
+        // These describe transitions (button presses)
+        
+        if (isYButtonPressed && isAButtonPressed) {
+          next_state = State.REVERSE_ARCADE;
+        } else  if(isYButtonPressed) {
+          next_state = State.FORWARD_ARCADE;
+        } else if (isAButtonPressed) {
+          next_state = State.REVERSE_TANK;
+        } else {
+          next_state = State.FORWARD_TANK;
+        }
+
+        m_drivetrain.tankDrive(leftSpeed, rightSpeed);
+    
+      } else if(current_state == State.FORWARD_ARCADE){
+
+        if (isXButtonPressed && isAButtonPressed) {
+          next_state = State.REVERSE_TANK;
+        } else  if(isXButtonPressed) {
+          next_state = State.FORWARD_TANK;
+        } else if (isAButtonPressed) {
+          next_state = State.REVERSE_ARCADE;
+        } else {
+          next_state = State.FORWARD_ARCADE;
+        }
+
+        m_drivetrain.arcadeDrive(speed, rotation);
+
+      } else if(current_state == State.REVERSE_TANK){
+
+        if (isYButtonPressed && isBButtonPressed) {
+          next_state = State.FORWARD_ARCADE;
+        } else  if(isYButtonPressed) {
+          next_state = State.REVERSE_ARCADE;
+        } else if (isBButtonPressed) {
+          next_state = State.FORWARD_TANK;
+        } else {
+          next_state = State.REVERSE_TANK;
+        }
+
+        m_drivetrain.tankDrive(-leftSpeed, -rightSpeed);
+        
+      } else if(current_state == State.REVERSE_ARCADE){
+
+        if (isXButtonPressed && isBButtonPressed) {
+          next_state = State.FORWARD_TANK;
+        } else  if(isXButtonPressed) {
+          next_state = State.REVERSE_TANK;
+        } else if (isBButtonPressed) {
+          next_state = State.FORWARD_ARCADE;
+        } else {
+          next_state = State.REVERSE_ARCADE;
+        }
+
+        m_drivetrain.arcadeDrive(-speed, rotation);
+        
       } else {
-        next_state = State.FORWARD_TANK;
+        m_drivetrain.tankDrive(0, 0);
       }
 
-   
+      current_state = next_state;
+    } else if(inTriangleDrive == true){
+      //auto routine for driving in a triangle
+
+      //grab current encoder distances
+      double leftDistanceStart = m_drivetrain.getLeftDistanceInch();
+      double rightDistanceStart = m_drivetrain.getRightDistanceInch();
+      
+      //repeat loop 3 times
+      for (int driveCount = 0; driveCount < 3; driveCount++){
+                        
+        //zero out encoder distances so we know how far we move right now
+        double leftDistanceTravelled = m_drivetrain.getLeftDistanceInch() - leftDistanceStart;
+        double rightDistanceTravelled = m_drivetrain.getRightDistanceInch() - rightDistanceStart;
+      
+        //move forward a bit
+        double distance = (leftDistanceTravelled + rightDistanceTravelled) / 2.0;
+        if(distance < 11) {
+          m_drivetrain.arcadeDrive(0.6, 0);
+        } else {
+          m_drivetrain.arcadeDrive(0, 0);
+        }
+
+        //grab encoder values again to re-zero out
+        leftDistanceStart = leftDistanceTravelled;
+        rightDistanceStart = rightDistanceTravelled;
+
+        //not sure if I need these 2 lines again really
+        leftDistanceTravelled = m_drivetrain.getLeftDistanceInch() - leftDistanceStart; 
+        rightDistanceTravelled = m_drivetrain.getRightDistanceInch() - rightDistanceStart;
+
+     
+
+        //want to draw an equilateral triangle, pivoting on one wheel
+        //outside wheel draws an arc with radius ~5.5", circumference = 34.54"
+        //needs to turn through 150 degrees
+        //(150/360)*34.54 = 14.4"
+        
+        //turn
+        if(rightDistanceTravelled < 14){
+          m_drivetrain.tankDrive(0, 0.6);
+        } else {
+          m_drivetrain.tankDrive(0,0);
+        }
+
+
+
+      }
+
+      //routine done, exit triangle drive
+      inTriangleDrive = false;
     }
-
-
-    if (current_state == State.FORWARD_TANK) {
-      double leftSpeed = m_controller.getRawAxis(1);
-      double rightSpeed = m_controller.getRawAxis(3);
-      m_drivetrain.tankDrive(leftSpeed, rightSpeed);
-
-    } else {
-      m_drivetrain.tankDrive(0, 0);
-    }
-
-    current_state = next_state;
-
   }
 
   /** This function is called once when the robot is disabled. */
