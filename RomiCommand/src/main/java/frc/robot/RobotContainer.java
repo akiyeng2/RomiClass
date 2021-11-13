@@ -8,9 +8,11 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.commands.ArcadeDrive;
+import frc.robot.commands.ArcadeDrive;
 import frc.robot.commands.AutonomousDistance;
 import frc.robot.commands.AutonomousTime;
 import frc.robot.commands.DriveTime;
+import frc.robot.commands.TankDrive;
 import frc.robot.commands.Turn;
 import frc.robot.subsystems.Drivetrain;
 import frc.robot.subsystems.OnBoardIO;
@@ -66,16 +68,16 @@ public class RobotContainer {
     // Default command is arcade drive. This will run unless another command
     // is scheduled over it.
     
-    // Homework: Make a Tank Drive command and make a tank/arcade selector on button press
-    // Start in arcade, A button goes to Tank, B button goes to arcade
-    // Draw the state machine and write the code
-
+    // Homework for this week: Define two subsystems, one for left wheel and one for the right wheel
+    // Implement moveWheel command that moves the wheel with appropriate speed
+    // Create a triangleDrive command group using timeouts
+    
     JoystickButton buttonB = new JoystickButton(m_controller, 2);
     JoystickButton buttonY = new JoystickButton(m_controller, 1);
 
     m_drivetrain.setDefaultCommand(getArcadeDriveCommand());
-    buttonB.whenPressed(new DriveTime(0.5, 5, m_drivetrain));
-    buttonY.whileHeld(new Turn(0.5, m_drivetrain));
+    buttonB.whenPressed(getTankDriveCommand());
+    buttonY.whenPressed(getArcadeDriveCommand());
 
   }
 
@@ -97,4 +99,8 @@ public class RobotContainer {
     return new ArcadeDrive(
         m_drivetrain, () -> -m_controller.getRawAxis(1), () -> m_controller.getRawAxis(2));
   }
+  public Command getTankDriveCommand() {
+    return new TankDrive(
+      m_drivetrain, () -> -m_controller.getRawAxis(1), () -> m_controller.getRawAxis(3));
+    }
 }
